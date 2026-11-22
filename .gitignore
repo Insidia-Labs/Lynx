@@ -221,3 +221,5 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Lynx run output (the baseline file is meant to be committed)
+.lynx/runs/
