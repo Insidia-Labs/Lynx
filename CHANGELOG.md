@@ -16,6 +16,10 @@ All notable changes to Lynx are recorded here. The format follows
 - Configuration (`lynx.config`): `LYNX_TOOL_NAME`, `LYNX_INFORMATION_URI` and
   `LYNX_REPORTED_STATES`, read from environment variables only (never from a
   `.env` file), documented in `.env.example`.
+- Secret masking (`lynx.core.mask`), applied to the SARIF report: known token formats
+  (cloud, Git hosting, chat and AI provider keys, JWTs, private keys),
+  `Authorization` values, password and key assignments, and credentials or secret
+  query values in URLs.
 
 ## [0.0.1] - unreleased
 

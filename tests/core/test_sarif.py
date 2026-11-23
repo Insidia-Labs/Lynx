@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 import pytest
@@ -143,3 +144,17 @@ def test_tool_name_and_reported_states_come_from_settings(monkeypatch: pytest.Mo
 
     assert run["tool"]["driver"]["name"] == "Lynx CI"
     assert len(run["results"]) == 1
+
+
+def test_secrets_in_findings_never_reach_the_report() -> None:
+    token = "ghp" + "_" + "z9Y8x7W6" * 5
+    finding = _finding(
+        message=f"Token {token} is committed in config.py",
+        location=LiveLocation(url="https://admin:hunter2-pass@app.test/x?api_key=abcd1234"),
+    )
+
+    report = json.dumps(to_sarif([finding], version="0.0.1"))
+
+    assert token not in report
+    assert "hunter2-pass" not in report
+    assert "abcd1234" not in report

@@ -2,7 +2,8 @@
 
 CWE ids go in `properties.tags` on both the rule and the result, source findings
 use paths relative to the scanned folder with line numbers, and live findings use
-the full URL. A run that found nothing still produces a valid report.
+the full URL. A run that found nothing still produces a valid report, and secrets
+quoted in findings are masked before anything is returned.
 """
 
 from collections.abc import Iterable, Sequence
@@ -16,6 +17,7 @@ from lynx.core.findings import (
     SourceLocation,
     TraceStep,
 )
+from lynx.core.mask import mask_secrets
 
 type Json = dict[str, Any]
 
@@ -55,7 +57,7 @@ def to_sarif(findings: Iterable[Finding], *, version: str) -> Json:
         "originalUriBaseIds": {SOURCE_ROOT: {"description": {"text": "The scanned folder"}}},
         "results": [_result(finding, index[finding.rule_id]) for finding in reported],
     }
-    return {"$schema": SARIF_SCHEMA, "version": SARIF_VERSION, "runs": [run]}
+    return mask_secrets({"$schema": SARIF_SCHEMA, "version": SARIF_VERSION, "runs": [run]})
 
 
 def _rules(findings: Sequence[Finding]) -> tuple[list[Json], dict[str, int]]:
