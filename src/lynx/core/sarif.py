@@ -43,8 +43,12 @@ def _cwe_tags(cwes: Iterable[int]) -> list[str]:
     return [f"CWE-{cwe}" for cwe in cwes]
 
 
-def to_sarif(findings: Iterable[Finding], *, version: str) -> Json:
-    """Build a SARIF document from the findings in the reported states (see `lynx.config`)."""
+def to_sarif(findings: Iterable[Finding], version: str, problems: Sequence[str] = ()) -> Json:
+    """Build a SARIF document from the findings in the reported states (see `lynx.config`).
+
+    Any problem (a detector that didn't run or failed) marks the run incomplete, so a
+    partial scan is never mistaken for a clean one.
+    """
     reported = [finding for finding in findings if finding.state in settings.reported_states]
     rules, index = _rules(reported)
     driver = {
@@ -54,10 +58,18 @@ def to_sarif(findings: Iterable[Finding], *, version: str) -> Json:
     }
     run = {
         "tool": {"driver": {**driver, "rules": rules}},
+        "invocations": [_invocation(problems)],
         "originalUriBaseIds": {SOURCE_ROOT: {"description": {"text": "The scanned folder"}}},
         "results": [_result(finding, index[finding.rule_id]) for finding in reported],
     }
     return mask_secrets({"$schema": SARIF_SCHEMA, "version": SARIF_VERSION, "runs": [run]})
+
+
+def _invocation(problems: Sequence[str]) -> Json:
+    if not problems:
+        return {"executionSuccessful": True}
+    notes = [{"level": "error", "message": {"text": problem}} for problem in problems]
+    return {"executionSuccessful": False, "toolExecutionNotifications": notes}
 
 
 def _rules(findings: Sequence[Finding]) -> tuple[list[Json], dict[str, int]]:
@@ -106,10 +118,12 @@ def _location(location: SourceLocation | LiveLocation) -> Json:
             "physicalLocation": {"artifactLocation": {"uri": location.url}},
             "properties": {"method": location.method},
         }
+    artifact = {"uri": location.path, "uriBaseId": SOURCE_ROOT}
+    if location.start_line is None:
+        return {"physicalLocation": {"artifactLocation": artifact}}
     region = {"startLine": location.start_line}
     if location.end_line is not None:
         region = {**region, "endLine": location.end_line}
-    artifact = {"uri": location.path, "uriBaseId": SOURCE_ROOT}
     return {"physicalLocation": {"artifactLocation": artifact, "region": region}}
 
 

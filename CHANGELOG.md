@@ -20,6 +20,14 @@ All notable changes to Lynx are recorded here. The format follows
   (cloud, Git hosting, chat and AI provider keys, JWTs, private keys),
   `Authorization` values, password and key assignments, and credentials or secret
   query values in URLs.
+- `lynx scan <path> [--sarif FILE]`: runs gitleaks (secrets) and OSV-Scanner
+  (vulnerable dependencies) and writes one SARIF report. Exit code 0 when the scan
+  finished, 2 when no detector could run; a missing or failed detector marks the
+  report incomplete with the reason.
+- Detectors run through `lynx.core.process`: no shell, no stdin, only an allow-list
+  of environment variables, and killed with their children after
+  `LYNX_DETECTOR_TIMEOUT` seconds.
+- A source location can omit lines to mean the whole file (dependency findings).
 
 ## [0.0.1] - unreleased
 

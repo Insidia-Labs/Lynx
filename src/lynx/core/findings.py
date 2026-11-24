@@ -40,7 +40,7 @@ class SourceLocation(_Frozen):
 
     kind: Literal["source"] = "source"
     path: str = Field(min_length=1)
-    start_line: int = Field(ge=1)
+    start_line: int | None = Field(default=None, ge=1)  # None means the whole file
     end_line: int | None = Field(default=None, ge=1)
 
 

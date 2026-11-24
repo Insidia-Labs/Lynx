@@ -66,3 +66,9 @@ def test_trace_and_needles_are_kept_in_order() -> None:
 
     assert [step.role for step in finding.trace] == ["source", "sink"]
     assert finding.needles == (needle,)
+
+
+def test_a_source_location_without_lines_means_the_whole_file() -> None:
+    location = SourceLocation(path="requirements.txt")
+
+    assert location.start_line is None

@@ -19,6 +19,18 @@ uv run lynx --version
 uv run pytest --cov
 ```
 
+Scan a folder:
+
+```bash
+uv run lynx scan path/to/repo --sarif lynx.sarif
+```
+
+`lynx scan` runs [gitleaks](https://github.com/gitleaks/gitleaks) (8.30) and
+[OSV-Scanner](https://github.com/google/osv-scanner) (2.7) when they're on your `PATH`.
+A missing detector is reported as "not run" in the summary and in the SARIF, never
+as a clean result. OSV-Scanner looks dependencies up in the public OSV database, so
+it needs network access.
+
 See [AGENTS.md](AGENTS.md) for the layout, checks and contribution rules.
 
 ## License

@@ -158,3 +158,29 @@ def test_secrets_in_findings_never_reach_the_report() -> None:
     assert token not in report
     assert "hunter2-pass" not in report
     assert "abcd1234" not in report
+
+
+def test_a_whole_file_location_has_no_region() -> None:
+    result = _run(
+        to_sarif([_finding(location=SourceLocation(path="requirements.txt"))], version="0")
+    )["results"][0]
+
+    assert "region" not in result["locations"][0]["physicalLocation"]
+
+
+def test_a_run_with_no_problems_completed() -> None:
+    run = _run(to_sarif([_finding()], version="0.0.1"))
+
+    assert run["invocations"] == [{"executionSuccessful": True}]
+
+
+def test_problems_mark_the_run_incomplete_and_are_listed() -> None:
+    run = _run(
+        to_sarif([_finding()], version="0.0.1", problems=["gitleaks: not run (not installed)"])
+    )
+
+    invocation = run["invocations"][0]
+    assert invocation["executionSuccessful"] is False
+    notes = [note["message"]["text"] for note in invocation["toolExecutionNotifications"]]
+    assert notes == ["gitleaks: not run (not installed)"]
+    assert len(run["results"]) == 1

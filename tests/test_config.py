@@ -51,3 +51,20 @@ def test_a_dotenv_file_in_the_scanned_folder_is_ignored(
 
     assert settings.tool_name == "Lynx"
     assert settings.reported_states == {FindingState.PROVEN, FindingState.CORROBORATED}
+
+
+def test_detector_timeout_defaults_to_ten_minutes_and_can_be_overridden(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert Settings().detector_timeout == 600
+
+    monkeypatch.setenv("LYNX_DETECTOR_TIMEOUT", "30")
+
+    assert Settings().detector_timeout == 30
+
+
+def test_detector_timeout_must_be_positive(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LYNX_DETECTOR_TIMEOUT", "0")
+
+    with pytest.raises(ValidationError):
+        Settings()
