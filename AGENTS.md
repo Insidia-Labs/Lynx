@@ -9,6 +9,7 @@ opens verified fixes. It is Python 3.14, built on LangGraph, and licensed GPL-3.
 ```
 src/lynx/
   cli.py        the `lynx` command
+  config.py     format constants and `LYNX_*` settings (see .env.example)
   core/         scope, masking, sandboxed subprocesses, findings schema, run store, reports
   engine/       the LangGraph run graph; nodes/ has one module per stage
   agent/        the investigate subgraph, tool rails, chat models; tools/ has the core tools
@@ -83,4 +84,7 @@ Run all four checks before committing.
 - **Verdicts come from the harness.** Only `lynx.proof` and the fix verifier set
   `proven` or `verified`; nothing the model writes can.
 - **Never commit secrets** or `.env` files, and never log prompts, API keys or tokens.
+- **Configuration comes from `LYNX_*` environment variables only.** Lynx never
+  loads a `.env` file, because the repository it scans must not be able to change
+  its behavior. Document every new setting in `.env.example`.
 - **Test only authorized targets.** Tests and local runs use localhost fixtures.
