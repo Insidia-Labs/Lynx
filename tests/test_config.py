@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from lynx.config import Settings
+from lynx.config import ModelSpec, Settings
 from lynx.core.findings import FindingState
 
 
@@ -79,3 +79,38 @@ def test_run_state_lives_in_the_user_state_folder_unless_overridden(
     monkeypatch.setenv("LYNX_STATE_DIR", str(tmp_path))
 
     assert Settings().state_dir == tmp_path
+
+
+def test_each_role_has_a_default_model() -> None:
+    settings = Settings()
+
+    assert settings.map_model == ModelSpec(provider="anthropic", name="claude-sonnet-5-5")
+    assert settings.investigate_model == ModelSpec(provider="anthropic", name="claude-opus-5-5")
+    assert settings.skeptic_model == ModelSpec(provider="anthropic", name="claude-sonnet-5-5")
+    assert settings.fix_model == ModelSpec(provider="anthropic", name="claude-opus-5-5")
+
+
+def test_a_role_can_use_an_openai_compatible_server(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LYNX_MAP_MODEL__PROVIDER", "openai")
+    monkeypatch.setenv("LYNX_MAP_MODEL__NAME", "qwen3.5")
+    monkeypatch.setenv("LYNX_MAP_MODEL__BASE_URL", "http://localhost:8000/v1")
+
+    settings = Settings()
+
+    assert settings.map_model == ModelSpec(
+        provider="openai", name="qwen3.5", base_url="http://localhost:8000/v1"
+    )
+    assert settings.investigate_model.name == "claude-opus-5-5"
+
+
+@pytest.mark.parametrize(
+    ("variable", "value"),
+    [("LYNX_FIX_MODEL__NAME", "claude-opus-5"), ("LYNX_FIX_MODEL__PROVIDER", "gemini")],
+)
+def test_a_model_override_needs_a_known_provider_and_a_name(
+    monkeypatch: pytest.MonkeyPatch, variable: str, value: str
+) -> None:
+    monkeypatch.setenv(variable, value)
+
+    with pytest.raises(ValidationError):
+        Settings()

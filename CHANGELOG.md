@@ -35,6 +35,13 @@ All notable changes to Lynx are recorded here. The format follows
 - `lynx scan --resume RUN_ID` finishes a scan stopped by Ctrl-C or SIGTERM without
   running finished detectors again. An interrupted scan exits 2 and prints the command
   to resume it.
+- A chat model per role (map, investigate, skeptic, fix), set with
+  `LYNX_<ROLE>_MODEL__PROVIDER`, `__NAME` and `__BASE_URL`: Anthropic, or any
+  OpenAI-compatible API. Defaults: Claude Sonnet 5.5 to map and filter, Claude Opus
+  5.5 to investigate and fix. Keys stay in `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`.
+- `lynx doctor`: asks each configured model for one small tool call and reports, per
+  role, whether it works or why not (key rejected, unknown model, unreachable, no
+  tool calling). Exit 0 when every model passes, 1 otherwise.
 - A source location can omit lines to mean the whole file (dependency findings).
 
 ## [0.0.1] - unreleased

@@ -11,7 +11,14 @@ from typing import Any
 from langchain_core.runnables import RunnableConfig
 
 from lynx import __version__
-from lynx.config import EXIT_FINISHED, EXIT_NOT_FINISHED, settings
+from lynx.agent.models import check_tool_calling
+from lynx.config import (
+    EXIT_CHECK_FAILED,
+    EXIT_FINISHED,
+    EXIT_NOT_FINISHED,
+    ModelSpec,
+    settings,
+)
 from lynx.core.mask import mask_text
 from lynx.detectors import DetectorRun
 from lynx.engine.graph import build_graph, new_run_id, open_checkpointer
@@ -37,12 +44,15 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="RUN_ID",
         help="finish an interrupted scan, with the folder and report path it started with",
     )
+    commands.add_parser("doctor", help="check that each role's chat model works and calls tools")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command == "doctor":
+        return _doctor()
     if args.command != "scan":
         parser.print_help()
         return EXIT_FINISHED
@@ -104,6 +114,25 @@ def _print_progress(update: dict[str, Any]) -> None:
     for change in update.values():
         for run in (change or {}).get("runs", []):
             print(mask_text(_summary(run)), file=sys.stderr)
+
+
+def _doctor() -> int:
+    """One line per role. A model shared by several roles is checked once."""
+    roles = {
+        "map": settings.map_model,
+        "investigate": settings.investigate_model,
+        "skeptic": settings.skeptic_model,
+        "fix": settings.fix_model,
+    }
+    problems: dict[ModelSpec, str | None] = {}
+    for role, spec in roles.items():
+        if spec not in problems:
+            problems[spec] = check_tool_calling(spec)
+        where = f" at {spec.base_url}" if spec.base_url else ""
+        verdict = problems[spec] or "ok, calls tools"
+        # Masked, as a URL or a provider's error message can carry a credential.
+        print(mask_text(f"{role}: {spec.provider} {spec.name}{where}: {verdict}"))
+    return EXIT_CHECK_FAILED if any(problems.values()) else EXIT_FINISHED
 
 
 def _summary(run: DetectorRun) -> str:

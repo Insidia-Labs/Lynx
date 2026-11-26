@@ -40,6 +40,18 @@ uv run lynx scan --resume <run id>
 
 Detectors that already finished aren't run again.
 
+Check the chat models before a scan needs them:
+
+```bash
+export ANTHROPIC_API_KEY=...
+uv run lynx doctor
+```
+
+Each role (map, investigate, skeptic, fix) has its own model, set in `LYNX_*`
+variables (see [.env.example](.env.example)). A role can use Anthropic or any
+OpenAI-compatible API, such as a local vLLM or Ollama server. `lynx doctor` asks each
+model for one small tool call, because every role needs tool calling.
+
 See [AGENTS.md](AGENTS.md) for the layout, checks and contribution rules.
 
 ## License
