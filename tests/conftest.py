@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+from lynx.config import Settings
+
 # A stand-in for a detector binary: it records its arguments, optionally sleeps,
 # writes a report to the path after `flag` if one is given, then exits.
 _FAKE_TOOL = """
@@ -18,6 +20,15 @@ sys.exit({exit_code})
 """
 
 FakeTool = Callable[..., Path]
+
+
+@pytest.fixture(autouse=True)
+def state_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Keep run checkpoints out of the real state folder, in this process and in children."""
+    folder = tmp_path / "state"
+    monkeypatch.setenv("LYNX_STATE_DIR", str(folder))
+    monkeypatch.setattr("lynx.cli.settings", Settings())
+    return folder
 
 
 @pytest.fixture

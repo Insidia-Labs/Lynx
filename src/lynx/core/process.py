@@ -50,4 +50,9 @@ def run_tool(argv: list[str], timeout: float) -> ToolRun:
             os.killpg(process.pid, signal.SIGKILL)
             stdout, stderr = process.communicate()
             return ToolRun(None, stdout, stderr)
+        except BaseException:
+            # Ctrl-C or SIGTERM stops Lynx, but the tool runs in its own session and
+            # never sees the signal, so stop it here rather than leave it running.
+            os.killpg(process.pid, signal.SIGKILL)
+            raise
     return ToolRun(process.returncode, stdout, stderr)

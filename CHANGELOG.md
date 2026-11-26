@@ -26,7 +26,15 @@ All notable changes to Lynx are recorded here. The format follows
   report incomplete with the reason.
 - Detectors run through `lynx.core.process`: no shell, no stdin, only an allow-list
   of environment variables, and killed with their children after
-  `LYNX_DETECTOR_TIMEOUT` seconds.
+  `LYNX_DETECTOR_TIMEOUT` seconds or when Lynx is interrupted.
+- `lynx scan` runs through the LangGraph run graph (`lynx.engine`): one node per
+  detector, then the report, with a SQLite checkpoint after each node in
+  `LYNX_STATE_DIR` (default `~/.local/state/lynx`, readable only by you).
+- Progress streams to stderr: one line per detector as it finishes, with its reason
+  when there is one, masked like the report.
+- `lynx scan --resume RUN_ID` finishes a scan stopped by Ctrl-C or SIGTERM without
+  running finished detectors again. An interrupted scan exits 2 and prints the command
+  to resume it.
 - A source location can omit lines to mean the whole file (dependency findings).
 
 ## [0.0.1] - unreleased

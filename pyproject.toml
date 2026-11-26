@@ -71,6 +71,8 @@ init_typed = true
 testpaths = ["tests"]
 # LangSmith (pulled in by LangGraph) auto-loads a pytest plugin; Lynx doesn't use it.
 addopts = ["-ra", "--strict-markers", "-p", "no:langsmith_plugin"]
+# LangSmith (imported by LangGraph) uses an asyncio function deprecated in 3.14.
+filterwarnings = ["ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:langsmith"]
 
 [tool.coverage.run]
 source = ["lynx"]

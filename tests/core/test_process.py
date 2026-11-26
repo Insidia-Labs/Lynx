@@ -1,4 +1,5 @@
 import json
+import signal
 import sys
 import time
 from pathlib import Path
@@ -71,6 +72,32 @@ def test_child_processes_are_killed_with_the_tool(tmp_path: Path) -> None:
 
     # Enough time for the tool to start its child and record the pid, even on a busy machine.
     run_tool(_python(code), timeout=3)
+
+    child = int(pid_file.read_text())
+    deadline = time.monotonic() + 5
+    while _alive(child) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert not _alive(child)
+
+
+@pytest.mark.skipif(not Path("/proc").is_dir(), reason="reads process state from /proc")
+def test_an_interrupt_stops_the_tool_and_its_children(tmp_path: Path) -> None:
+    pid_file = tmp_path / "child.pid"
+    code = (
+        "import subprocess, sys, time\n"
+        "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'])\n"
+        f"open({str(pid_file)!r}, 'w').write(str(child.pid))\n"
+        "time.sleep(30)\n"
+    )
+    # Ctrl-C arrives while Lynx waits on the tool; the alarm raises KeyboardInterrupt.
+    previous = signal.signal(signal.SIGALRM, signal.default_int_handler)
+    signal.setitimer(signal.ITIMER_REAL, 3)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            run_tool(_python(code), timeout=30)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
 
     child = int(pid_file.read_text())
     deadline = time.monotonic() + 5

@@ -68,3 +68,14 @@ def test_detector_timeout_must_be_positive(monkeypatch: pytest.MonkeyPatch) -> N
 
     with pytest.raises(ValidationError):
         Settings()
+
+
+def test_run_state_lives_in_the_user_state_folder_unless_overridden(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("LYNX_STATE_DIR")
+    assert Settings().state_dir == Path.home() / ".local" / "state" / "lynx"
+
+    monkeypatch.setenv("LYNX_STATE_DIR", str(tmp_path))
+
+    assert Settings().state_dir == tmp_path

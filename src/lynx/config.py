@@ -9,6 +9,8 @@ repository must not be able to change how Lynx behaves, for example by hiding
 findings.
 """
 
+from pathlib import Path
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -33,6 +35,8 @@ class Settings(BaseSettings):
         {FindingState.PROVEN, FindingState.CORROBORATED}
     )
     detector_timeout: float = Field(default=600, gt=0)  # seconds per detector run
+    # Run checkpoints, so an interrupted scan can be resumed.
+    state_dir: Path = Path.home() / ".local" / "state" / "lynx"
 
 
 settings = Settings()

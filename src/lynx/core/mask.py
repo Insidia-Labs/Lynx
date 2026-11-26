@@ -55,7 +55,7 @@ def mask_secrets(document: dict[str, Any]) -> dict[str, Any]:
 
 def _mask_value(value: Any) -> Any:
     if isinstance(value, str):
-        return _mask_text(value)
+        return mask_text(value)
     if isinstance(value, dict):
         return mask_secrets(value)
     if isinstance(value, list):
@@ -63,7 +63,8 @@ def _mask_value(value: Any) -> Any:
     return value
 
 
-def _mask_text(text: str) -> str:
+def mask_text(text: str) -> str:
+    """Return the text with secrets masked."""
     for pattern, replacement in _PATTERNS:
         text = pattern.sub(replacement, text)
     return text
